@@ -70,7 +70,9 @@ class MosaicApp {
             status: $('#status'),
             error: $('#error'),
             toolSelection: $('#toolSelection'),
-            selectionModeRadios: $$('input[name="selectionMode"]')
+            selectionModeRadios: $$('input[name="selectionMode"]'),
+            mosaicSizeSlider: $('#mosaicSizeSlider'),
+            mosaicSizeValue: $('#mosaicSizeValue')
         };
         
         // 必要な要素が存在するかチェック（配列は除外）
@@ -105,6 +107,9 @@ class MosaicApp {
         this.elements.selectionModeRadios.forEach(radio => {
             radio.addEventListener('change', (e) => this.changeSelectionMode(e.target.value));
         });
+        
+        // モザイクサイズ変更
+        this.elements.mosaicSizeSlider.addEventListener('input', (e) => this.updateMosaicSize(e.target.value));
         
         // ドラッグ&ドロップ対応
         this.initDragAndDrop();
@@ -272,8 +277,11 @@ class MosaicApp {
                 selectionMask = this.selectionManager.createSelectionMask(info.width, info.height);
             }
             
+            // スライダーで設定されたブロックサイズを取得
+            const blockSize = parseInt(this.elements.mosaicSizeSlider.value);
+            
             // モザイク処理を実行（現在の状態をベースに段階的処理）
-            const success = await this.imageProcessor.applyMosaic(CONFIG.mosaic.defaultBlockSize, selectionMask, true);
+            const success = await this.imageProcessor.applyMosaic(blockSize, selectionMask, true);
             
             if (success) {
                 this.onProcessingComplete();
@@ -610,6 +618,16 @@ class MosaicApp {
         });
         
         debugLog('Selection mode UI updated', { currentMode });
+    }
+    
+    /**
+     * モザイクサイズを更新
+     * @param {string} value - スライダーの値
+     */
+    updateMosaicSize(value) {
+        const size = parseInt(value);
+        this.elements.mosaicSizeValue.textContent = `${size}px`;
+        debugLog('Mosaic size updated', { size });
     }
     
     /**

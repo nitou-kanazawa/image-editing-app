@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像編集アプリ</title>
+    <title>画像モザイク処理アプリ</title>
     <link rel="stylesheet" href="src/css/styles.css">
 </head>
 <body>
@@ -23,20 +23,39 @@
             </section>
 
             <section class="tool-selection" id="toolSelection" style="display: none;">
-                <h3>選択モード</h3>
-                <div class="tool-selection__options">
-                    <label class="radio-option">
-                        <input type="radio" name="selectionMode" value="rectangle" checked>
-                        <span>バウンディングボックス</span>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="selectionMode" value="freehand">
-                        <span>フリー選択</span>
-                    </label>
-                    <label class="radio-option">
-                        <input type="radio" name="selectionMode" value="full">
-                        <span>全体</span>
-                    </label>
+                <div class="tool-section">
+                    <h3>選択モード</h3>
+                    <div class="tool-selection__options">
+                        <label class="radio-option">
+                            <input type="radio" name="selectionMode" value="rectangle" checked>
+                            <span>バウンディングボックス</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="selectionMode" value="freehand">
+                            <span>フリー選択</span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="selectionMode" value="full">
+                            <span>全体</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="tool-section">
+                    <h3>モザイク設定</h3>
+                    <div class="mosaic-controls">
+                        <label class="slider-control">
+                            <span class="slider-control__label">粗さ:</span>
+                            <input type="range" 
+                                   id="mosaicSizeSlider"
+                                   class="slider-control__slider"
+                                   min="5" 
+                                   max="50" 
+                                   value="10" 
+                                   step="1">
+                            <span class="slider-control__value" id="mosaicSizeValue">10px</span>
+                        </label>
+                    </div>
                 </div>
             </section>
 

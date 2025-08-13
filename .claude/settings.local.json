@@ -8,7 +8,9 @@
       "Bash(move utils.js src/js/)",
       "Bash(move imageProcessor.js src/js/)",
       "Bash(move app.js src/js/)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(python:*)",
+      "Bash(start \"\" \"http://localhost:8000\")"
     ],
     "deny": []
   }
