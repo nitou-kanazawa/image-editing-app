@@ -334,21 +334,27 @@ class SelectionManager {
     
     /**
      * 選択をクリア
+     * @param {boolean} resetToDefault - デフォルト状態にリセットするか（デフォルト: false）
      */
-    clearSelection() {
+    clearSelection(resetToDefault = false) {
         this.isSelecting = false;
         this.selectionPath = [];
         this.rectangleSelection = null;
         this.startPoint = null;
         this.currentPoint = null;
+        this.isConfirmed = false;
         
-        // 全体モード以外の場合のみ確定状態をクリア
-        if (this.selectionMode !== 'full') {
-            this.isConfirmed = false;
+        // デフォルト状態にリセット（バウンディングボックスモード、選択なし）
+        if (resetToDefault) {
+            this.selectionMode = 'rectangle';
         }
         
         this.clearOverlay();
-        debugLog('Selection cleared', { mode: this.selectionMode, isConfirmed: this.isConfirmed });
+        debugLog('Selection cleared', { 
+            mode: this.selectionMode, 
+            isConfirmed: this.isConfirmed,
+            resetToDefault 
+        });
     }
     
     /**
@@ -363,9 +369,9 @@ class SelectionManager {
      * @returns {boolean}
      */
     hasSelection() {
-        if (this.selectionMode === 'full') return true;
-        if (this.selectionMode === 'rectangle') return this.rectangleSelection !== null;
-        if (this.selectionMode === 'freehand') return this.selectionPath.length > 0;
+        if (this.selectionMode === 'full') return this.isConfirmed;
+        if (this.selectionMode === 'rectangle') return this.rectangleSelection !== null && this.isConfirmed;
+        if (this.selectionMode === 'freehand') return this.selectionPath.length > 0 && this.isConfirmed;
         return false;
     }
     

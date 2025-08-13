@@ -32,6 +32,12 @@ const CONFIG = {
         showProgressBar: true
     },
     
+    // 履歴設定
+    history: {
+        maxStates: 10, // 最大履歴数
+        autoSave: true // 自動保存
+    },
+    
     // メッセージ
     messages: {
         selectImage: '画像を選択してください',

@@ -6,6 +6,7 @@ class MosaicApp {
         this.elements = {};
         this.imageProcessor = null;
         this.selectionManager = null;
+        this.historyManager = null;
         this.isProcessing = false;
         
         this.init();
@@ -35,6 +36,9 @@ class MosaicApp {
             // 選択マネージャーを初期化
             this.selectionManager = new SelectionManager(this.elements.canvas, this.elements.overlayCanvas);
             
+            // 履歴マネージャーを初期化
+            this.historyManager = new HistoryManager(CONFIG.history?.maxStates || 10);
+            
             // 選択変更コールバックを設定
             this.selectionManager.setSelectionChangeCallback(() => {
                 debugLog('Selection change callback triggered');
@@ -59,6 +63,9 @@ class MosaicApp {
             canvas: $('#canvas'),
             overlayCanvas: $('#overlayCanvas'),
             processBtn: $('#processBtn'),
+            undoBtn: $('#undoBtn'),
+            redoBtn: $('#redoBtn'),
+            resetBtn: $('#resetBtn'),
             downloadBtn: $('#downloadBtn'),
             status: $('#status'),
             error: $('#error'),
@@ -84,6 +91,13 @@ class MosaicApp {
         // モザイク処理ボタン
         this.elements.processBtn.addEventListener('click', () => this.processImage());
         
+        // Undo/Redoボタン
+        this.elements.undoBtn.addEventListener('click', () => this.undo());
+        this.elements.redoBtn.addEventListener('click', () => this.redo());
+        
+        // リセットボタン
+        this.elements.resetBtn.addEventListener('click', () => this.resetToOriginal());
+        
         // ダウンロードボタン
         this.elements.downloadBtn.addEventListener('click', () => this.downloadImage());
         
@@ -94,6 +108,9 @@ class MosaicApp {
         
         // ドラッグ&ドロップ対応
         this.initDragAndDrop();
+        
+        // キーボードショートカット
+        this.initKeyboardShortcuts();
         
         debugLog('Event listeners initialized');
     }
@@ -204,6 +221,7 @@ class MosaicApp {
         this.showCanvas();
         this.showToolSelection();
         this.hideDownloadButton();
+        this.showResetButton();
         this.showStatus(CONFIG.messages.imageLoaded);
         
         // オーバーレイキャンバスのサイズと位置を設定
@@ -214,6 +232,9 @@ class MosaicApp {
         // 初期状態のボタンを更新
         this.updateSelectionButtons();
         this.updateProcessButton();
+        
+        // 初期状態を履歴に保存
+        this.saveCurrentState('Initial Image Load');
         
         debugLog('Image loaded', info);
     }
@@ -251,14 +272,20 @@ class MosaicApp {
                 selectionMask = this.selectionManager.createSelectionMask(info.width, info.height);
             }
             
-            // モザイク処理を実行
-            const success = await this.imageProcessor.applyMosaic(CONFIG.mosaic.defaultBlockSize, selectionMask);
+            // モザイク処理を実行（現在の状態をベースに段階的処理）
+            const success = await this.imageProcessor.applyMosaic(CONFIG.mosaic.defaultBlockSize, selectionMask, true);
             
             if (success) {
                 this.onProcessingComplete();
-                // モザイク処理後に選択をクリア
+                
+                // 処理後の状態を履歴に保存
+                this.saveCurrentState('Mosaic Applied');
+                
+                // モザイク処理後に選択をクリア（選択なし状態に戻す）
                 this.selectionManager.clearSelection();
                 this.updateProcessButton();
+                this.updateHistoryButtons();
+                this.updateSelectionModeUI();
             } else {
                 this.showError(CONFIG.messages.error.processingFailed);
             }
@@ -393,6 +420,20 @@ class MosaicApp {
     }
     
     /**
+     * リセットボタンを表示
+     */
+    showResetButton() {
+        toggleDisplay(this.elements.resetBtn, true);
+    }
+    
+    /**
+     * リセットボタンを隠す
+     */
+    hideResetButton() {
+        toggleDisplay(this.elements.resetBtn, false);
+    }
+    
+    /**
      * 選択モードを変更
      * @param {string} mode - 選択モード
      */
@@ -451,6 +492,124 @@ class MosaicApp {
             width: mainCanvasRect.width, 
             height: mainCanvasRect.height 
         });
+    }
+    
+    /**
+     * キーボードショートカットを初期化
+     */
+    initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Z: Undo
+            if (e.ctrlKey && e.key === 'z' && !e.shiftKey) {
+                e.preventDefault();
+                this.undo();
+            }
+            // Ctrl+Y or Ctrl+Shift+Z: Redo
+            else if (e.ctrlKey && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) {
+                e.preventDefault();
+                this.redo();
+            }
+        });
+    }
+    
+    /**
+     * 現在の状態を履歴に保存
+     * @param {string} actionName - アクション名
+     */
+    saveCurrentState(actionName) {
+        if (this.imageProcessor.hasImage()) {
+            const currentImageData = this.imageProcessor.ctx.getImageData(
+                0, 0, 
+                this.imageProcessor.canvas.width, 
+                this.imageProcessor.canvas.height
+            );
+            this.historyManager.saveState(currentImageData, actionName);
+            this.updateHistoryButtons();
+        }
+    }
+    
+    /**
+     * Undo実行
+     */
+    undo() {
+        const previousState = this.historyManager.undo();
+        if (previousState) {
+            this.imageProcessor.ctx.putImageData(previousState, 0, 0);
+            this.updateHistoryButtons();
+            this.selectionManager.clearSelection();
+            this.updateProcessButton();
+            this.updateSelectionModeUI();
+            this.showStatus(`元に戻しました: ${this.historyManager.getCurrentActionName()}`);
+            debugLog('Undo executed');
+        }
+    }
+    
+    /**
+     * Redo実行
+     */
+    redo() {
+        const nextState = this.historyManager.redo();
+        if (nextState) {
+            this.imageProcessor.ctx.putImageData(nextState, 0, 0);
+            this.updateHistoryButtons();
+            this.selectionManager.clearSelection();
+            this.updateProcessButton();
+            this.updateSelectionModeUI();
+            this.showStatus(`やり直しました: ${this.historyManager.getCurrentActionName()}`);
+            debugLog('Redo executed');
+        }
+    }
+    
+    /**
+     * 履歴ボタンの状態を更新
+     */
+    updateHistoryButtons() {
+        this.elements.undoBtn.disabled = !this.historyManager.canUndo();
+        this.elements.redoBtn.disabled = !this.historyManager.canRedo();
+        
+        // ツールチップを更新
+        const previousAction = this.historyManager.getPreviousActionName();
+        const nextAction = this.historyManager.getNextActionName();
+        
+        this.elements.undoBtn.title = previousAction ? 
+            `元に戻す: ${previousAction} (Ctrl+Z)` : 
+            '元に戻す (Ctrl+Z)';
+            
+        this.elements.redoBtn.title = nextAction ? 
+            `やり直し: ${nextAction} (Ctrl+Y)` : 
+            'やり直し (Ctrl+Y)';
+    }
+    
+    /**
+     * 元画像に戻す
+     */
+    resetToOriginal() {
+        const success = this.imageProcessor.restoreOriginal();
+        if (success) {
+            // リセット後の状態を履歴に保存
+            this.saveCurrentState('Reset to Original');
+            
+            this.selectionManager.clearSelection();
+            this.updateProcessButton();
+            this.updateHistoryButtons();
+            this.updateSelectionModeUI();
+            this.showStatus('元画像に戻しました');
+            debugLog('Reset to original image');
+        }
+    }
+    
+    /**
+     * 選択モードUIを更新
+     */
+    updateSelectionModeUI() {
+        const currentMode = this.selectionManager.selectionMode;
+        
+        // ラジオボタンを現在のモードに合わせる
+        this.elements.selectionModeRadios.forEach(radio => {
+            radio.checked = radio.value === currentMode;
+        });
+        
+        debugLog('Selection mode UI updated', { currentMode });
     }
     
     /**

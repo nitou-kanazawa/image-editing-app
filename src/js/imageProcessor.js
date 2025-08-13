@@ -48,22 +48,35 @@ class ImageProcessor {
     }
     
     /**
-     * モザイク処理を適用
+     * モザイク処理を適用（段階的処理対応）
      * @param {number} blockSize - モザイクブロックサイズ
      * @param {ImageData} selectionMask - 選択範囲マスク（オプション）
+     * @param {boolean} useCurrentState - 現在の状態をベースにするか（デフォルト: true）
      * @returns {Promise<boolean>}
      */
-    async applyMosaic(blockSize = CONFIG.mosaic.defaultBlockSize, selectionMask = null) {
+    async applyMosaic(blockSize = CONFIG.mosaic.defaultBlockSize, selectionMask = null, useCurrentState = true) {
         if (!this.originalImageData) {
             throw new Error('No image data available');
         }
         
         try {
-            // 元画像データのコピーを作成
+            let sourceImageData;
+            
+            if (useCurrentState) {
+                // 現在のキャンバス状態を取得（段階的処理用）
+                sourceImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+                debugLog('Using current canvas state for mosaic processing');
+            } else {
+                // 元画像データを使用（従来の動作）
+                sourceImageData = this.originalImageData;
+                debugLog('Using original image data for mosaic processing');
+            }
+            
+            // ソースデータのコピーを作成
             const imageData = new ImageData(
-                new Uint8ClampedArray(this.originalImageData.data),
-                this.originalImageData.width,
-                this.originalImageData.height
+                new Uint8ClampedArray(sourceImageData.data),
+                sourceImageData.width,
+                sourceImageData.height
             );
             
             // モザイク処理を実行
@@ -76,7 +89,11 @@ class ImageProcessor {
             // 処理結果をキャンバスに描画
             this.ctx.putImageData(imageData, 0, 0);
             
-            debugLog('Mosaic applied successfully', { blockSize, hasMask: !!selectionMask });
+            debugLog('Mosaic applied successfully', { 
+                blockSize, 
+                hasMask: !!selectionMask, 
+                useCurrentState 
+            });
             return true;
             
         } catch (error) {
@@ -167,12 +184,15 @@ class ImageProcessor {
     
     /**
      * 元画像を復元
+     * @returns {boolean} - 復元が成功したか
      */
     restoreOriginal() {
         if (this.originalImageData) {
             this.ctx.putImageData(this.originalImageData, 0, 0);
             debugLog('Original image restored');
+            return true;
         }
+        return false;
     }
     
     /**
