@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(start index.html)",
+      "Bash(mkdir:*)",
+      "Bash(move styles.css src/css/)",
+      "Bash(move config.js src/js/)",
+      "Bash(move utils.js src/js/)",
+      "Bash(move imageProcessor.js src/js/)",
+      "Bash(move app.js src/js/)",
+      "Bash(mv:*)"
+    ],
+    "deny": []
+  }
+}
