@@ -27,11 +27,11 @@ function $$(selector) {
  */
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
@@ -45,13 +45,13 @@ function formatFileSize(bytes) {
  */
 function calculateOptimalSize(originalWidth, originalHeight, maxWidth, maxHeight) {
     let { width, height } = { width: originalWidth, height: originalHeight };
-    
+
     if (width > maxWidth || height > maxHeight) {
         const ratio = Math.min(maxWidth / width, maxHeight / height);
         width = Math.round(width * ratio);
         height = Math.round(height * ratio);
     }
-    
+
     return { width, height };
 }
 
@@ -85,14 +85,14 @@ function validateFile(file) {
             error: CONFIG.messages.error.invalidFile
         };
     }
-    
+
     if (!validateFileSize(file)) {
         return {
             valid: false,
             error: `${CONFIG.messages.error.fileTooLarge} (現在: ${formatFileSize(file.size)})`
         };
     }
-    
+
     return { valid: true, error: null };
 }
 
@@ -138,9 +138,9 @@ function checkBrowserSupport() {
         fileApi: !!(window.File && window.FileReader && window.FileList),
         downloadApi: 'download' in document.createElement('a')
     };
-    
+
     support.allSupported = Object.values(support).every(Boolean);
-    
+
     return support;
 }
 

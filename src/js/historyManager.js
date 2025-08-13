@@ -6,10 +6,10 @@ class HistoryManager {
         this.history = []; // 履歴スタック
         this.currentIndex = -1; // 現在の位置
         this.maxHistorySize = maxHistorySize; // 最大履歴数
-        
+
         debugLog('HistoryManager initialized', { maxHistorySize });
     }
-    
+
     /**
      * 新しい状態を履歴に追加
      * @param {ImageData} imageData - 画像データ
@@ -21,35 +21,35 @@ class HistoryManager {
             if (this.currentIndex < this.history.length - 1) {
                 this.history = this.history.slice(0, this.currentIndex + 1);
             }
-            
+
             // 新しい状態を作成
             const state = {
                 imageData: this.cloneImageData(imageData),
                 actionName,
                 timestamp: Date.now()
             };
-            
+
             // 履歴に追加
             this.history.push(state);
             this.currentIndex = this.history.length - 1;
-            
+
             // 履歴サイズ制限
             if (this.history.length > this.maxHistorySize) {
                 this.history.shift(); // 最古の履歴を削除
                 this.currentIndex--;
             }
-            
-            debugLog('State saved', { 
-                actionName, 
-                historyLength: this.history.length, 
-                currentIndex: this.currentIndex 
+
+            debugLog('State saved', {
+                actionName,
+                historyLength: this.history.length,
+                currentIndex: this.currentIndex
             });
-            
+
         } catch (error) {
             errorLog('Failed to save state', error);
         }
     }
-    
+
     /**
      * Undo（元に戻す）
      * @returns {ImageData|null} - 前の状態の画像データ
@@ -58,18 +58,18 @@ class HistoryManager {
         if (!this.canUndo()) {
             return null;
         }
-        
+
         this.currentIndex--;
         const state = this.history[this.currentIndex];
-        
-        debugLog('Undo executed', { 
-            actionName: state.actionName, 
-            currentIndex: this.currentIndex 
+
+        debugLog('Undo executed', {
+            actionName: state.actionName,
+            currentIndex: this.currentIndex
         });
-        
+
         return this.cloneImageData(state.imageData);
     }
-    
+
     /**
      * Redo（やり直し）
      * @returns {ImageData|null} - 次の状態の画像データ
@@ -78,18 +78,18 @@ class HistoryManager {
         if (!this.canRedo()) {
             return null;
         }
-        
+
         this.currentIndex++;
         const state = this.history[this.currentIndex];
-        
-        debugLog('Redo executed', { 
-            actionName: state.actionName, 
-            currentIndex: this.currentIndex 
+
+        debugLog('Redo executed', {
+            actionName: state.actionName,
+            currentIndex: this.currentIndex
         });
-        
+
         return this.cloneImageData(state.imageData);
     }
-    
+
     /**
      * Undoが可能かチェック
      * @returns {boolean}
@@ -97,7 +97,7 @@ class HistoryManager {
     canUndo() {
         return this.currentIndex > 0;
     }
-    
+
     /**
      * Redoが可能かチェック
      * @returns {boolean}
@@ -105,7 +105,7 @@ class HistoryManager {
     canRedo() {
         return this.currentIndex < this.history.length - 1;
     }
-    
+
     /**
      * 現在のアクション名を取得
      * @returns {string|null}
@@ -116,7 +116,7 @@ class HistoryManager {
         }
         return null;
     }
-    
+
     /**
      * 前のアクション名を取得（Undo対象）
      * @returns {string|null}
@@ -127,7 +127,7 @@ class HistoryManager {
         }
         return null;
     }
-    
+
     /**
      * 次のアクション名を取得（Redo対象）
      * @returns {string|null}
@@ -138,7 +138,7 @@ class HistoryManager {
         }
         return null;
     }
-    
+
     /**
      * ImageDataをクローン
      * @param {ImageData} imageData - 元の画像データ
@@ -152,7 +152,7 @@ class HistoryManager {
         );
         return cloned;
     }
-    
+
     /**
      * 履歴をクリア
      */
@@ -161,7 +161,7 @@ class HistoryManager {
         this.currentIndex = -1;
         debugLog('History cleared');
     }
-    
+
     /**
      * 履歴情報を取得
      * @returns {Object}
@@ -178,7 +178,7 @@ class HistoryManager {
             memoryUsage: this.calculateMemoryUsage()
         };
     }
-    
+
     /**
      * 概算メモリ使用量を計算
      * @returns {string}
@@ -188,14 +188,14 @@ class HistoryManager {
         this.history.forEach(state => {
             totalBytes += state.imageData.data.length * 4; // RGBA = 4 bytes per pixel
         });
-        
+
         if (totalBytes < 1024 * 1024) {
             return Math.round(totalBytes / 1024) + ' KB';
         } else {
             return Math.round(totalBytes / (1024 * 1024)) + ' MB';
         }
     }
-    
+
     /**
      * 履歴の最適化（古い履歴を削除してメモリを節約）
      * @param {number} keepCount - 保持する履歴数
@@ -206,10 +206,10 @@ class HistoryManager {
             this.history.splice(0, removeCount);
             this.currentIndex -= removeCount;
             if (this.currentIndex < 0) this.currentIndex = 0;
-            
-            debugLog('History optimized', { 
-                removedCount: removeCount, 
-                remaining: this.history.length 
+
+            debugLog('History optimized', {
+                removedCount: removeCount,
+                remaining: this.history.length
             });
         }
     }

@@ -1,23 +1,22 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>画像モザイク処理アプリ</title>
     <link rel="stylesheet" href="src/css/styles.css">
 </head>
+
 <body>
     <div class="app">
         <header class="app__header">
             <h1 class="app__title">画像モザイク処理アプリ</h1>
         </header>
-        
+
         <main class="app__main">
             <section class="upload-section">
-                <input type="file" 
-                       id="imageInput" 
-                       class="upload-section__input" 
-                       accept="image/*">
+                <input type="file" id="imageInput" class="upload-section__input" accept="image/*">
                 <div class="status" id="status">画像を選択してください</div>
                 <div class="error" id="error" style="display: none;"></div>
             </section>
@@ -46,13 +45,8 @@
                     <div class="mosaic-controls">
                         <label class="slider-control">
                             <span class="slider-control__label">粗さ:</span>
-                            <input type="range" 
-                                   id="mosaicSizeSlider"
-                                   class="slider-control__slider"
-                                   min="5" 
-                                   max="50" 
-                                   value="10" 
-                                   step="1">
+                            <input type="range" id="mosaicSizeSlider" class="slider-control__slider" min="5" max="50"
+                                value="10" step="1">
                             <span class="slider-control__value" id="mosaicSizeValue">10px</span>
                         </label>
                     </div>
@@ -63,36 +57,24 @@
                 <canvas id="canvas" class="canvas-section__canvas"></canvas>
                 <canvas id="overlayCanvas" class="canvas-section__overlay"></canvas>
             </section>
-            
+
             <section class="controls">
                 <div class="controls__group">
-                    <button class="btn btn--neutral btn--icon" 
-                            id="undoBtn" 
-                            title="元に戻す (Ctrl+Z)"
-                            disabled>
+                    <button class="btn btn--neutral btn--icon" id="undoBtn" title="元に戻す (Ctrl+Z)" disabled>
                         ↶ Undo
                     </button>
-                    <button class="btn btn--neutral btn--icon" 
-                            id="redoBtn" 
-                            title="やり直し (Ctrl+Y)"
-                            disabled>
+                    <button class="btn btn--neutral btn--icon" id="redoBtn" title="やり直し (Ctrl+Y)" disabled>
                         ↷ Redo
                     </button>
                 </div>
                 <div class="controls__group">
-                    <button class="btn btn--primary" 
-                            id="processBtn" 
-                            disabled>
+                    <button class="btn btn--primary" id="processBtn" disabled>
                         モザイク処理実行
                     </button>
-                    <button class="btn btn--neutral" 
-                            id="resetBtn" 
-                            style="display: none;">
+                    <button class="btn btn--neutral" id="resetBtn" style="display: none;">
                         元画像に戻す
                     </button>
-                    <button class="btn btn--secondary" 
-                            id="downloadBtn" 
-                            style="display: none;">
+                    <button class="btn btn--secondary" id="downloadBtn" style="display: none;">
                         ダウンロード
                     </button>
                 </div>
@@ -107,4 +89,5 @@
     <script src="src/js/imageProcessor.js"></script>
     <script src="src/js/app.js"></script>
 </body>
+
 </html>

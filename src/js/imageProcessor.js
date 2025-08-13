@@ -7,10 +7,10 @@ class ImageProcessor {
         this.ctx = canvas.getContext('2d');
         this.originalImageData = null;
         this.currentImage = null;
-        
+
         debugLog('ImageProcessor initialized');
     }
-    
+
     /**
      * 画像を読み込んでキャンバスに表示
      * @param {HTMLImageElement} img - 画像要素
@@ -19,34 +19,34 @@ class ImageProcessor {
     async loadImage(img) {
         try {
             this.currentImage = img;
-            
+
             // 最適なサイズを計算
             const { width, height } = calculateOptimalSize(
-                img.width, 
-                img.height, 
-                CONFIG.canvas.maxWidth, 
+                img.width,
+                img.height,
+                CONFIG.canvas.maxWidth,
                 CONFIG.canvas.maxHeight
             );
-            
+
             // キャンバスサイズを設定
             this.canvas.width = width;
             this.canvas.height = height;
-            
+
             // 画像を描画
             this.ctx.drawImage(img, 0, 0, width, height);
-            
+
             // 元画像データを保存
             this.originalImageData = this.ctx.getImageData(0, 0, width, height);
-            
+
             debugLog('Image loaded successfully', { width, height });
             return true;
-            
+
         } catch (error) {
             errorLog('Failed to load image', error);
             return false;
         }
     }
-    
+
     /**
      * モザイク処理を適用（段階的処理対応）
      * @param {number} blockSize - モザイクブロックサイズ
@@ -58,10 +58,10 @@ class ImageProcessor {
         if (!this.originalImageData) {
             throw new Error('No image data available');
         }
-        
+
         try {
             let sourceImageData;
-            
+
             if (useCurrentState) {
                 // 現在のキャンバス状態を取得（段階的処理用）
                 sourceImageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
@@ -71,37 +71,37 @@ class ImageProcessor {
                 sourceImageData = this.originalImageData;
                 debugLog('Using original image data for mosaic processing');
             }
-            
+
             // ソースデータのコピーを作成
             const imageData = new ImageData(
                 new Uint8ClampedArray(sourceImageData.data),
                 sourceImageData.width,
                 sourceImageData.height
             );
-            
+
             // モザイク処理を実行
             if (selectionMask) {
                 this._processMosaicWithMask(imageData, blockSize, selectionMask);
             } else {
                 this._processMosaic(imageData, blockSize);
             }
-            
+
             // 処理結果をキャンバスに描画
             this.ctx.putImageData(imageData, 0, 0);
-            
-            debugLog('Mosaic applied successfully', { 
-                blockSize, 
-                hasMask: !!selectionMask, 
-                useCurrentState 
+
+            debugLog('Mosaic applied successfully', {
+                blockSize,
+                hasMask: !!selectionMask,
+                useCurrentState
             });
             return true;
-            
+
         } catch (error) {
             errorLog('Failed to apply mosaic', error);
             return false;
         }
     }
-    
+
     /**
      * モザイク処理の実装
      * @private
@@ -110,18 +110,18 @@ class ImageProcessor {
      */
     _processMosaic(imageData, blockSize) {
         const { data, width, height } = imageData;
-        
+
         for (let y = 0; y < height; y += blockSize) {
             for (let x = 0; x < width; x += blockSize) {
                 // ブロック内の平均色を計算
                 const avgColor = this._calculateAverageColor(data, x, y, blockSize, width, height);
-                
+
                 // ブロック全体を平均色で塗りつぶし
                 this._fillBlock(data, x, y, blockSize, width, height, avgColor);
             }
         }
     }
-    
+
     /**
      * ブロック内の平均色を計算
      * @private
@@ -135,10 +135,10 @@ class ImageProcessor {
      */
     _calculateAverageColor(data, startX, startY, blockSize, width, height) {
         let r = 0, g = 0, b = 0, count = 0;
-        
+
         const endX = Math.min(startX + blockSize, width);
         const endY = Math.min(startY + blockSize, height);
-        
+
         for (let y = startY; y < endY; y++) {
             for (let x = startX; x < endX; x++) {
                 const index = (y * width + x) * 4;
@@ -148,14 +148,14 @@ class ImageProcessor {
                 count++;
             }
         }
-        
+
         return {
             r: Math.round(r / count),
             g: Math.round(g / count),
             b: Math.round(b / count)
         };
     }
-    
+
     /**
      * ブロックを指定色で塗りつぶし
      * @private
@@ -170,7 +170,7 @@ class ImageProcessor {
     _fillBlock(data, startX, startY, blockSize, width, height, color) {
         const endX = Math.min(startX + blockSize, width);
         const endY = Math.min(startY + blockSize, height);
-        
+
         for (let y = startY; y < endY; y++) {
             for (let x = startX; x < endX; x++) {
                 const index = (y * width + x) * 4;
@@ -181,7 +181,7 @@ class ImageProcessor {
             }
         }
     }
-    
+
     /**
      * 元画像を復元
      * @returns {boolean} - 復元が成功したか
@@ -194,7 +194,7 @@ class ImageProcessor {
         }
         return false;
     }
-    
+
     /**
      * 現在の画像をダウンロード用のBlobとして取得
      * @param {string} format - 画像フォーマット
@@ -206,7 +206,7 @@ class ImageProcessor {
             this.canvas.toBlob(resolve, format, quality);
         });
     }
-    
+
     /**
      * マスクを使ったモザイク処理の実装
      * @private
@@ -217,21 +217,21 @@ class ImageProcessor {
     _processMosaicWithMask(imageData, blockSize, selectionMask) {
         const { data, width, height } = imageData;
         const maskData = selectionMask.data;
-        
+
         for (let y = 0; y < height; y += blockSize) {
             for (let x = 0; x < width; x += blockSize) {
                 // ブロック内にマスクされたピクセルがあるかチェック
                 if (this._hasSelectedPixels(maskData, x, y, blockSize, width, height)) {
                     // ブロック内の平均色を計算
                     const avgColor = this._calculateAverageColor(data, x, y, blockSize, width, height);
-                    
+
                     // マスクされたピクセルのみモザイク処理
                     this._fillBlockWithMask(data, maskData, x, y, blockSize, width, height, avgColor);
                 }
             }
         }
     }
-    
+
     /**
      * ブロック内に選択されたピクセルがあるかチェック
      * @private
@@ -246,7 +246,7 @@ class ImageProcessor {
     _hasSelectedPixels(maskData, startX, startY, blockSize, width, height) {
         const endX = Math.min(startX + blockSize, width);
         const endY = Math.min(startY + blockSize, height);
-        
+
         for (let y = startY; y < endY; y++) {
             for (let x = startX; x < endX; x++) {
                 const index = (y * width + x) * 4;
@@ -257,7 +257,7 @@ class ImageProcessor {
         }
         return false;
     }
-    
+
     /**
      * マスクを使ってブロックを塗りつぶし
      * @private
@@ -273,7 +273,7 @@ class ImageProcessor {
     _fillBlockWithMask(data, maskData, startX, startY, blockSize, width, height, color) {
         const endX = Math.min(startX + blockSize, width);
         const endY = Math.min(startY + blockSize, height);
-        
+
         for (let y = startY; y < endY; y++) {
             for (let x = startX; x < endX; x++) {
                 const index = (y * width + x) * 4;
@@ -285,7 +285,7 @@ class ImageProcessor {
             }
         }
     }
-    
+
     /**
      * キャンバスをクリア
      */
@@ -295,7 +295,7 @@ class ImageProcessor {
         this.currentImage = null;
         debugLog('Canvas cleared');
     }
-    
+
     /**
      * 現在の画像があるかチェック
      * @returns {boolean}
@@ -303,14 +303,14 @@ class ImageProcessor {
     hasImage() {
         return this.originalImageData !== null;
     }
-    
+
     /**
      * 画像の情報を取得
      * @returns {Object|null}
      */
     getImageInfo() {
         if (!this.hasImage()) return null;
-        
+
         return {
             width: this.canvas.width,
             height: this.canvas.height,

@@ -9,14 +9,14 @@ const CONFIG = {
         defaultWidth: 800,
         defaultHeight: 600
     },
-    
+
     // モザイク設定
     mosaic: {
         defaultBlockSize: 10,
         minBlockSize: 5,
         maxBlockSize: 50
     },
-    
+
     // ファイル設定
     file: {
         maxSize: 10 * 1024 * 1024, // 10MB
@@ -24,20 +24,20 @@ const CONFIG = {
         downloadFormat: 'image/png',
         downloadFileName: 'mosaic-image.png'
     },
-    
+
     // UI設定
     ui: {
         fadeAnimationDuration: 300,
         processingDelay: 100, // UIをブロックしないための遅延
         showProgressBar: true
     },
-    
+
     // 履歴設定
     history: {
         maxStates: 10, // 最大履歴数
         autoSave: true // 自動保存
     },
-    
+
     // メッセージ
     messages: {
         selectImage: '画像を選択してください',
