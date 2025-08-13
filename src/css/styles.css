@@ -250,6 +250,7 @@ body {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     display: none;
     transition: all 0.3s ease;
+    margin: 0 auto;
 }
 
 .canvas-section__canvas.visible,
@@ -259,8 +260,8 @@ body {
 
 .canvas-section__overlay {
     position: absolute;
-    top: 2px;
-    left: 2px;
+    top: 0;
+    left: 0;
     pointer-events: none;
     border: none;
     box-shadow: none;
