@@ -289,11 +289,37 @@ class MosaicApp {
                 // 処理後の状態を履歴に保存
                 this.saveCurrentState('Mosaic Applied');
                 
-                // モザイク処理後に選択をクリア（選択なし状態に戻す）
-                this.selectionManager.clearSelection();
+                // モザイク処理後に選択をクリア（現在のモードを保持）
+                this.selectionManager.clearSelectionKeepMode();
+                
+                // オーバーレイキャンバスを強制的にクリア
+                this.selectionManager.clearOverlay();
+                
+                // 即座にボタンを無効化（最優先）
+                this.elements.processBtn.disabled = true;
+                
+                // ボタン状態を複数回更新して確実に非アクティブ化
                 this.updateProcessButton();
                 this.updateHistoryButtons();
                 this.updateSelectionModeUI();
+                
+                // オーバーレイキャンバスを一度非表示にして再表示（強制リセット）
+                this.elements.overlayCanvas.style.display = 'none';
+                setTimeout(() => {
+                    this.elements.overlayCanvas.style.display = 'block';
+                    // setTimeout後もボタンを再度無効化
+                    this.elements.processBtn.disabled = true;
+                }, 10);
+                
+                // さらに確実にするため、少し遅延させてもう一度無効化
+                setTimeout(() => {
+                    this.elements.processBtn.disabled = true;
+                    debugLog('Final button disable check', { 
+                        disabled: this.elements.processBtn.disabled,
+                        hasSelection: this.selectionManager.hasSelection(),
+                        mode: this.selectionManager.selectionMode
+                    });
+                }, 50);
             } else {
                 this.showError(CONFIG.messages.error.processingFailed);
             }
@@ -397,7 +423,14 @@ class MosaicApp {
         const hasSelection = this.selectionManager.hasSelection();
         const isConfirmed = this.selectionManager.isSelectionConfirmed();
         
-        debugLog('Updating process button', { mode, hasSelection, isConfirmed });
+        debugLog('Updating process button', { 
+            mode, 
+            hasSelection, 
+            isConfirmed,
+            rectangleSelection: this.selectionManager.rectangleSelection,
+            selectionPathLength: this.selectionManager.selectionPath.length,
+            currentButtonState: this.elements.processBtn.disabled
+        });
         
         // 全体モードの場合は常に有効
         if (mode === 'full') {
@@ -406,7 +439,11 @@ class MosaicApp {
         }
         
         // 選択モードの場合は選択範囲が確定されている場合のみ有効
-        if (hasSelection && isConfirmed) {
+        // 厳密チェック: hasSelection と isConfirmed の両方が true の場合のみ
+        if (hasSelection && isConfirmed && (
+            (mode === 'rectangle' && this.selectionManager.rectangleSelection !== null) ||
+            (mode === 'freehand' && this.selectionManager.selectionPath.length > 0)
+        )) {
             this.elements.processBtn.disabled = false;
         } else {
             this.elements.processBtn.disabled = true;
@@ -616,6 +653,9 @@ class MosaicApp {
         this.elements.selectionModeRadios.forEach(radio => {
             radio.checked = radio.value === currentMode;
         });
+        
+        // モードUI更新後にボタン状態も再確認
+        this.updateProcessButton();
         
         debugLog('Selection mode UI updated', { currentMode });
     }

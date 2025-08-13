@@ -46,15 +46,19 @@ class SelectionManager {
      * @param {string} mode - 選択モード
      */
     setSelectionMode(mode) {
+        const previousMode = this.selectionMode;
         this.selectionMode = mode;
         this.clearSelection();
         
-        // 全体モードの場合は自動的に確定状態にする
-        if (mode === 'full') {
+        // 全体モードの場合は自動的に確定状態にする（モード変更時のみ）
+        if (mode === 'full' && previousMode !== 'full') {
             this.isConfirmed = true;
+        } else if (mode !== 'full') {
+            // 全体モード以外では確定状態をクリア
+            this.isConfirmed = false;
         }
         
-        debugLog('Selection mode changed', mode);
+        debugLog('Selection mode changed', { previousMode, newMode: mode, isConfirmed: this.isConfirmed });
         
         // 状態変更を通知
         this.notifySelectionComplete();
@@ -342,14 +346,23 @@ class SelectionManager {
         this.rectangleSelection = null;
         this.startPoint = null;
         this.currentPoint = null;
-        this.isConfirmed = false;
         
         // デフォルト状態にリセット（バウンディングボックスモード、選択なし）
         if (resetToDefault) {
             this.selectionMode = 'rectangle';
+            this.isConfirmed = false;
+        } else {
+            // 全体モード以外では確定状態をクリア
+            if (this.selectionMode !== 'full') {
+                this.isConfirmed = false;
+            }
         }
         
         this.clearOverlay();
+        
+        // 選択変更を通知してボタン状態を更新
+        this.notifySelectionComplete();
+        
         debugLog('Selection cleared', { 
             mode: this.selectionMode, 
             isConfirmed: this.isConfirmed,
@@ -361,7 +374,26 @@ class SelectionManager {
      * オーバーレイキャンバスをクリア
      */
     clearOverlay() {
+        // キャンバス全体をクリア
         this.overlayCtx.clearRect(0, 0, this.overlayCanvas.width, this.overlayCanvas.height);
+        
+        // 描画状態を完全にリセット
+        this.overlayCtx.beginPath();
+        this.overlayCtx.closePath();
+        
+        // スタイル設定もリセット
+        this.overlayCtx.strokeStyle = 'black';
+        this.overlayCtx.fillStyle = 'black';
+        this.overlayCtx.lineWidth = 1;
+        this.overlayCtx.setLineDash([]);
+        
+        // グローバル透明度もリセット
+        this.overlayCtx.globalAlpha = 1;
+        
+        debugLog('Overlay completely cleared and reset', {
+            width: this.overlayCanvas.width,
+            height: this.overlayCanvas.height
+        });
     }
     
     /**
@@ -436,6 +468,35 @@ class SelectionManager {
      */
     setSelectionChangeCallback(callback) {
         this.onSelectionChange = callback;
+    }
+    
+    /**
+     * 現在のモードを保持しながら選択状態のみクリア
+     */
+    clearSelectionKeepMode() {
+        this.isSelecting = false;
+        this.selectionPath = [];
+        this.rectangleSelection = null;
+        this.startPoint = null;
+        this.currentPoint = null;
+        
+        // 全体モード以外では確定状態をクリア
+        if (this.selectionMode !== 'full') {
+            this.isConfirmed = false;
+        } else {
+            // 全体モードでも処理後は一度確定状態をクリア
+            this.isConfirmed = false;
+        }
+        
+        this.clearOverlay();
+        
+        // 選択変更を通知してボタン状態を更新
+        this.notifySelectionComplete();
+        
+        debugLog('Selection cleared while keeping mode', { 
+            mode: this.selectionMode, 
+            isConfirmed: this.isConfirmed
+        });
     }
     
     /**
